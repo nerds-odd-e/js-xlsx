@@ -747,8 +747,13 @@ function parseSheet(data) {
 					p.raw = p.v;
 					p.rawt = p.t;
 					try {
-						p.v = SSF.format(cf.numFmtId,p.v,_ssfopts);
-						p.t = 'str';
+						if (opts.evaluateFmt === true) {
+							p.v = SSF.format(cf.numFmtId,p.v,_ssfopts);
+							p.t = 'str';
+						} else {
+							var format = SSF._choose(cf.numFmtId,p.v,_ssfopts);
+							p.rawnf = format[1].replace(/\\/g,"");
+						};
 					} catch(e) { p.v = p.raw; }
 				}
 			}
@@ -1209,7 +1214,7 @@ function parseZip(zip) {
 	};
 }
 
-var _fs, jszip;
+var _fs, jszip,opts;
 if(typeof JSZip !== 'undefined') jszip = JSZip;
 if (typeof exports !== 'undefined') {
 	if (typeof module !== 'undefined' && module.exports) {
@@ -1220,8 +1225,10 @@ if (typeof exports !== 'undefined') {
 
 function readSync(data, options) {
 	var zip, d = data;
-	var o = options||{};
-	switch((o.type||"base64")){
+	opts = options||{};
+	if (opts.evaluateFmt === undefined)
+		opts.evaluateFmt = true;
+	switch((opts.type||"base64")){
 		case "file": d = _fs.readFileSync(data).toString('base64');
 			/* falls through */
 		case "base64": zip = new jszip(d, { base64:true }); break;
@@ -1231,8 +1238,10 @@ function readSync(data, options) {
 }
 
 function readFileSync(data, options) {
-	var o = options||{}; o.type = 'file';
-	return readSync(data, o);
+	opts = options||{}; opts.type = 'file';
+	if (opts.evaluateFmt === undefined)
+		opts.evaluateFmt = true;
+	return readSync(data, opts);
 }
 
 XLSX.read = readSync;
