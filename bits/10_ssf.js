@@ -176,6 +176,8 @@ var write_date = function(type, fmt, val) {
 			case 's': return val.S;
 			case 'ss': return pad(val.S, 2);
 			case 'ss.0': return pad(val.S,2) + "." + Math.round(10*val.u);
+			case 'ss.00': return pad(val.S,2) + "." + pad(Math.round(10*val.u),2);
+			case 'ss.000': return pad(val.S,2) + "." + pad(Math.round(10*val.u),3);
 			default: throw 'bad second format: ' + fmt;
 		} break;
 		case 'Z': switch(fmt) {

@@ -98,7 +98,7 @@ var styles = {}; // shared styles
 var _ssfopts = {}; // spreadsheet formatting options
 
 /* 18.3 Worksheets */
-function parseSheet(data) {
+function parseSheet(data, options) {
 	if(!data) return data;
 	/* 18.3.1.99 worksheet CT_Worksheet */
 	var s = {};
@@ -137,7 +137,11 @@ function parseSheet(data) {
 			q.forEach(function(f){var x=d.match(matchtag(f));if(x)p[f]=unescapexml(x[1]);});
 
 			/* SCHEMA IS ACTUALLY INCORRECT HERE.  IF A CELL HAS NO T, EMIT "" */
-			if(cell.t === undefined && p.v === undefined) { p.t = "str"; p.v = undefined; }
+			if(cell.t === undefined && p.v === undefined) {
+				if (options.skipEmptyCells) return;
+				p.t = "str";
+				p.v = undefined;
+			}
 			else p.t = (cell.t ? cell.t : "n"); // default is "n" in schema
 			switch(p.t) {
 				case 'n': p.v = parseFloat(p.v); break;
@@ -168,9 +172,16 @@ function parseSheet(data) {
 					p.raw = p.v;
 					p.rawt = p.t;
 					try {
-						p.v = SSF.format(cf.numFmtId,p.v,_ssfopts);
+						p.v = SSF.format(cf.numFmtId,p.raw,_ssfopts);
 						p.t = 'str';
-					} catch(e) { p.v = p.raw; }
+					} catch(e) {}
+					if (options.skipRawnf !== true) {
+						var format = SSF._choose(cf.numFmtId,p.raw,_ssfopts);
+						var rawnf = format[1].replace(/\\/g,"");
+						if (rawnf !== '@') {
+							p.rawnf = rawnf;
+						}
+					}
 				}
 			}
 
@@ -566,7 +577,7 @@ function getzipfile(zip, file) {
 	throw new Error("Cannot find file " + file + " in zip");
 }
 
-function parseZip(zip) {
+function parseZip(zip, options) {
 	var entries = Object.keys(zip.files);
 	var keys = entries.filter(function(x){return x.substr(-1) != '/';}).sort();
 	var dir = parseCT(getdata(getzipfile(zip, '[Content_Types].xml')));
@@ -597,7 +608,7 @@ function parseZip(zip) {
                 try { /* TODO: remove these guards */
 	                var path = 'xl/worksheets/sheet' + (i+1) + '.xml';
 	                var relsPath = path.replace(/^(.*)(\/)([^\/]*)$/, "$1/_rels/$3.rels");
-	                sheets[props.SheetNames[i]]=parseSheet(getdata(getzipfile(zip, path)));
+	                sheets[props.SheetNames[i]]=parseSheet(getdata(getzipfile(zip, path)), options);
 	                sheetRels[props.SheetNames[i]]=parseRels(getdata(getzipfile(zip, relsPath)), path);
                 } catch(e) {}
         }
@@ -607,7 +618,7 @@ function parseZip(zip) {
             try {
             	var path = dir.sheets[i].replace(/^\//,'');
 				var relsPath = path.replace(/^(.*)(\/)([^\/]*)$/, "$1/_rels/$3.rels");
-            	sheets[props.SheetNames[i]]=parseSheet(getdata(getzipfile(zip, path)));
+            	sheets[props.SheetNames[i]]=parseSheet(getdata(getzipfile(zip, path)), options);
             	sheetRels[props.SheetNames[i]]=parseRels(getdata(getzipfile(zip, relsPath)), path);
             } catch(e) {}
         }
@@ -648,7 +659,7 @@ function readSync(data, options) {
 		case "base64": zip = new jszip(d, { base64:true }); break;
 		case "binary": zip = new jszip(d, { base64:false }); break;
 	}
-	return parseZip(zip);
+	return parseZip(zip, options);
 }
 
 function readFileSync(data, options) {

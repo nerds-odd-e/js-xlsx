@@ -40,7 +40,7 @@ describe('should parse test files', function() {
 	});
 });
 
-describe.only('should have comment as part of cell\'s properties', function(){
+describe('When looking for cell comments', function(){
 	var ws;
 	before(function() {
 		XLSX = require('./xlsx');
@@ -48,17 +48,22 @@ describe.only('should have comment as part of cell\'s properties', function(){
 		var sheetName = 'Sheet1';
 		ws = wb.Sheets[sheetName];
 	});
-	it('Parse comments.xml and insert into cell',function(){
+	it('Must parse comments.xml and insert into cell',function(){
 		assert.equal(ws.B1.c.length, 1,"must have 1 comment");
 		assert.equal(ws.B1.c[0].t, "Yegor Kozlov:\r\nfirst cell", "must have the concatenated texts");
 		assert.equal(ws.B1.c[0].r, '<span style="font-weight: bold;">Yegor Kozlov:</span><span style=""><br/>first cell</span>', "must have the html representation");
 		assert.equal(ws.B1.c[0].a, "Yegor Kozlov","must have the same author");
-	it('Parse numberFormat and return rawnf into cell',function(){
-		var wb = XLSX.readFile('./stoic_SimpleWithDataFormat.xlsx',{evaluateFmt:false});
-		var sheetName = 'Sheet1';
-		var ws = wb.Sheets[sheetName];
-		assert.equal(ws.A2.rawnf,'m/d/yy h:mm:ss am/pm','rawnf must have a number format');
-		assert.equal(ws.A2.raw,ws.A2.v,'raw and value is the same');
-		assert.equal(ws.A2.raw, 41641.375,' raw should be this value');
+	});
+});
+
+describe.only('When parsing number formats', function() {
+	var ws;
+	before(function() {
+		XLSX = require('./xlsx');
+		var wb = XLSX.readFile('./test_files/apachepoi_DateFormatTests.xlsx');
+		ws = wb.Sheets.Tests;
+	});
+	it('Must parse numberFormat and return rawnf into cell',function(){
+		assert.equal(ws.C3.rawnf,'dd-mmm-yyyy hh:mm:ss.000','rawnf must have a number format');
 	});
 });
