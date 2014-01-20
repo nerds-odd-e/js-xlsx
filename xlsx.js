@@ -755,9 +755,7 @@ function parseSheet(data, options) {
 					try {
 						p.v = SSF.format(cf.numFmtId,p.raw,_ssfopts);
 						p.t = 'str';
-					} catch(e) {
-						console.error('Unexpected error evaluating fmt ' + cf.numFmtId, e, p);
-					}
+					} catch(e) {}
 					if (options.skipRawnf !== true) {
 						var format = SSF._choose(cf.numFmtId,p.raw,_ssfopts);
 						var rawnf = format[1].replace(/\\/g,"");

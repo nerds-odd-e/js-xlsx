@@ -56,7 +56,7 @@ describe('When looking for cell comments', function(){
 	});
 });
 
-describe.only('When parsing number formats', function() {
+describe('When parsing number formats', function() {
 	var ws;
 	before(function() {
 		XLSX = require('./xlsx');
